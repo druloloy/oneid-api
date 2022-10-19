@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- cross security policy -->
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="upgrade-insecure-requests" />
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+            crossorigin="anonymous" />
+
+        <title>Patient Queue Engine</title>
+
+        <!-- socket.io cdn -->
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.2/socket.io.js"
+            integrity="sha512-VJ6+sp2E5rFQk05caiXXzQd1wBABpjEj1r5kMiLmGAAgwPItw1YpqsCCBtq8Yr1x6C49/mTpRdXtq8O2RcZhlQ=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+        <style>
+           input[type="radio"]:checked + .lbl{
+                background-color: rgba(0, 0, 255, 0.144) !important;
+            }
+        </style>
+    </head>
+    <body>
+        <main
+            class="w-100 h-100 bg-light d-flex flex-column justify-content-center align-items-center p-4">
+            <h1 class="fw-bold text-darker">Patient Queue</h1>
+
+            <div
+                class="w-100 d-flex flex-column justify-content-start align-items-start border-2 border-primary">
+                <div id="patient-queue" class="w-100 d-flex flex-column justifycontent-start align-items-center">
+                </div>  
+                <div class="w-100 p-2 d-flex gap-2">
+                    <button class="w-100 btn btn-primary rounded-3 fw-bold" onclick="add()">Add</button>
+                    <button class="w-100 btn btn-outline-danger rounded-3 fw-bold" onclick="remove()">Remove</button>
+                    <button class="w-100 btn btn-outline-secondary rounded-3 fw-bold" onclick="select()">Select</button>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            const socket = io.connect('http://localhost:5000/live', {
+                transports: ['websocket'],
+                reconnectionAttempts: 3,
+                withCredentials: true,
+            });
+
+            function add() {
+                socket.emit(
+                    'queue::add',
+                    'J-9kR3blX9r04KdK6pX3Rl9kEW9NxKdwYrgScFOGJ6M'
+                );
+            }
+            function remove() {
+                const id = document.querySelector('input[name="queue"]:checked').value;
+                console.log(id)
+                socket.emit(
+                    'queue::remove',
+                    id
+                );
+            }
+            function select(){
+                const id = document.querySelector('input[name="queue"]:checked').value;
+                console.log("selected:", id);
+                socket.emit('queue::select', id);
+            }
+
+            socket.on('queue::one', patient=>{
+                console.log("received patient info", patient)
+            })
+
+            socket.on('queue::all', (data) => {
+                console.log(data)
+                
+                // add to form
+                const container = document.querySelector('#patient-queue');
+                container.innerHTML = ""; // clear
+                data.forEach((data)=>{
+
+                    // create box
+                    const box = document.createElement('div');
+                    box.classList.add('box','position-relative', 'border-2', 'border-primary', 'p-2', 'w-100', 'd-flex', 'flex-row', 'justify-content-between', 'align-items-center');
+                    box.setAttribute('id', 'box-'+data._id);
+
+                    const input = document.createElement('input');
+                    input.classList.add('queue', 'w-100','h-100', 'position-absolute', 'top-0', 'start-0');
+                    input.setAttribute('type', 'radio');    
+                    input.setAttribute('id', "patient-"+data._id);
+                    input.setAttribute('name', 'queue');
+                    input.setAttribute('value', data._id);
+                    input.setAttribute('style', 'opacity: 0');
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', "label-"+data._id);
+                    label.classList.add('lbl','w-100', 'd-flex', 'flex-row', 'justify-content-between', 'align-items-center', 'gap-4', 'p-4', 'rounded-3');
+                    label.innerHTML = `QUEUE ${data.queueNumber}: ${data.patient.firstName} ${data.patient.lastName}`;
+                    
+                    box.appendChild(input);
+                    box.appendChild(label);
+                    
+                    container.appendChild(box);
+                })
+            });
+
+            socket.on('success', (data) => {
+                console.log('success: ', data);
+            });
+
+            socket.on('error', (err) => {
+                alert(err);
+            });
+            
+            socket.on('connect_error', (err) => {
+                alert('Connection error: ' + err.message);
+            });
+            socket.on('connect_failed', (err) => {
+                alert('Connection failed: ' + err.message);
+            });
+
+            // window.addEventListener('load', () => {
+            //     setTimeout(() => {
+            //         const d = document.querySelectorAll('[id^="box-"]')
+            //         d.forEach((d)=>{
+            //             d.addEventListener('click', (e)=>{
+            //                 // change box color if selected
+            //                 d.classList.toggle('bg-primary');
+            //                 d.classList.toggle('text-light');
+            //             })
+            //         })
+                    
+            //     }, 2000);
+            // });
+
+        </script>
+    </body>
+</html>
