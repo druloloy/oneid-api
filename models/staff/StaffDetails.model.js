@@ -124,7 +124,6 @@ StaffDetailsSchema.methods.toJSON = function () {
     const staffObject = staff.toObject();
 
     delete staffObject.__v;
-    delete staffObject._id;
 
     return staffObject;
 };

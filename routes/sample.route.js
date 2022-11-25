@@ -13,8 +13,8 @@ router.post('/sample', (req, res) => {
 });
 router.get('/sample1', (req, res) => {
     res.cookie('user1', 'sample1', {
-        httpOnly: false,
-        secure: false,
+        httpOnly: true,
+        secure: true,
     });
     res.json({
         success: true,

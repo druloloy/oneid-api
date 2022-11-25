@@ -4,6 +4,10 @@ const Exception = require('../error/Exception');
 const aes = require('../security/aes/aes');
 const PatientMedical = require('../models/patient/PatientMedical.model');
 const PatientConsultation = require('../models/patient/PatientConsultation.model');
+const StaffLogin = require('../models/staff/StaffLogin.model');
+const StaffDetails = require('../models/staff/StaffDetails.model');
+const GenOneId = require('../helpers/GenOneId');
+const titleCaser = require('../helpers/titleCaser');
 
 exports.getPersonalLogin = async (req, res, next) => {
     try {
@@ -22,12 +26,14 @@ exports.getPersonalLogin = async (req, res, next) => {
 exports.getPersonalDetails = async (req, res, next) => {
     try {
         const patient = req.user;
-        const patientDetails = await PatientDetails.findById(patient._id);
+        const patientDetails = await PatientDetails.findOne({
+            _id: patient._id,
+        });
 
         res.status(200).json({
             success: true,
             id: patient._id,
-            content: patientDetails.toJSON(),
+            content: patientDetails?.toJSON() ?? null,
         });
     } catch (error) {
         return next(error);
@@ -37,12 +43,14 @@ exports.getPersonalDetails = async (req, res, next) => {
 exports.getPersonalMedical = async (req, res, next) => {
     try {
         const patient = req.user;
-        const patientMedical = await PatientMedical.findById(patient._id);
+        const patientMedical = await PatientMedical.findOne({
+            _id: patient._id,
+        });
 
         res.status(200).json({
             success: true,
             id: patient._id,
-            content: patientMedical.toJSON(),
+            content: patientMedical?.toJSON() ?? null,
         });
     } catch (error) {
         return next(error);
@@ -59,7 +67,7 @@ exports.getPersonalConsultations = async (req, res, next) => {
         res.status(200).json({
             success: true,
             id: patient._id,
-            content: patientConsultation,
+            content: patientConsultation ?? null,
         });
     } catch (error) {
         return next(error);
@@ -82,6 +90,14 @@ exports.createAccount = async (req, res, next) => {
 
         await patientLogin.save();
 
+        const sid = await patientLogin.generateSessionId();
+
+        // pass session id and user id
+
+        const userId = patientLogin._id.toHexString();
+        res.cookie('_sid', sid);
+        res.cookie('_uid', aes.encrypt(userId));
+
         res.status(201).json({
             success: true,
             message: 'Account created successfully',
@@ -93,8 +109,15 @@ exports.createAccount = async (req, res, next) => {
 };
 exports.addAccountDetails = async (req, res, next) => {
     try {
-        const { firstName, middleName, lastName, suffix, birthdate, address } =
-            req.body;
+        const {
+            firstName,
+            middleName,
+            lastName,
+            suffix,
+            birthdate,
+            address,
+            sex,
+        } = req.body;
 
         const patient = req.user;
 
@@ -103,16 +126,16 @@ exports.addAccountDetails = async (req, res, next) => {
 
         const patientDetails = new PatientDetails({
             _id: patient,
-            firstName,
-            middleName,
-            lastName,
-            suffix,
+            firstName: titleCaser(firstName),
+            middleName: middleName ? titleCaser(middleName) : '',
+            lastName: titleCaser(lastName),
+            suffix: suffix ? titleCaser(suffix) : '',
             birthdate,
             address,
+            sex,
         });
-        await patientDetails.save();
 
-        patient.accountCompleted = true;
+        await patientDetails.save();
         await patient.save();
 
         res.status(201).json({
@@ -141,7 +164,7 @@ exports.loginAccount = async (req, res, next) => {
                 new Exception('Mobile number or password is incorrect.', 400)
             );
 
-        const isMatch = patientLogin.comparePassword(password);
+        const isMatch = await patientLogin.comparePassword(password);
 
         if (!isMatch)
             return next(
@@ -181,12 +204,13 @@ exports.addMedical = async (req, res, next) => {
             allergies,
         });
         await patientMedical.save();
-
+        patient.accountCompleted = true;
         res.status(201).json({
             success: true,
             message: 'Medical details added successfully',
         });
     } catch (error) {
+        console.log(error);
         return next(error);
     }
 };
@@ -281,6 +305,28 @@ exports.toggleSmsAlerts = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'SMS alerts toggled successfully',
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.generateId = async (req, res, next) => {
+    try {
+        const patient = req.user;
+        const patientDetails = await PatientDetails.findById(patient._id);
+
+        if (!patientDetails)
+            return next(new Exception('Patient details not found', 404));
+
+        const image = await GenOneId(patient._id.toString(), {
+            firstName: patientDetails.firstName,
+            lastName: patientDetails.lastName,
+            suffix: patientDetails.suffix,
+        });
+        res.status(200).json({
+            success: true,
+            content: image,
         });
     } catch (error) {
         return next(error);

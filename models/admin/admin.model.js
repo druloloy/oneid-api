@@ -59,6 +59,20 @@ AdminSchema.methods.toJSON = function () {
     return admin;
 };
 
+/**
+ * Compares password with the hashed password
+ * @param {string} candidatePassword
+ * @returns boolean
+ */
+AdminSchema.methods.comparePassword = async function (candidatePassword) {
+    const admin = await Admin.findOne({
+        username: this.username,
+    }).select('password');
+
+    const isMatch = await bcrypt.compare(candidatePassword, admin.password);
+    return isMatch;
+};
+
 AdminSchema.methods.generateSessionId = async function () {
     const admin = await Admin.findOne({
         username: this.username,

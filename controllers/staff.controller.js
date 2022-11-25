@@ -106,21 +106,28 @@ exports.consultPatient = async (req, res, next) => {
         const staff = req.user;
         const { patient_id } = req.query;
         const {
-            conditions,
+            condition,
             treatments,
             prescriptions,
             remarks,
             nextConsultation,
         } = req.body;
 
+        const staffName = await StaffDetails.findById(staff._id).select(
+            'firstName lastName suffix'
+        );
+
         const patientConsultation = new PatientConsultation({
             patientId: patient_id,
-            conditions,
+            condition,
             treatments,
             prescriptions,
             remarks,
             nextConsultation,
-            consultatedBy: staff._id,
+            consultedBy: {
+                id: staff,
+                name: `${staffName.firstName} ${staffName.lastName} ${staffName.suffix}`,
+            },
         });
 
         console.log(prescriptions);

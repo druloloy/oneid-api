@@ -6,10 +6,9 @@ const PatientConsultationSchema = new mongoose.Schema({
         ref: 'PatientLogin',
         required: true,
     },
-    conditions: {
-        type: [String],
+    condition: {
+        type: String,
         required: true,
-        default: [],
     },
     treatments: {
         type: [String],
@@ -65,10 +64,22 @@ const PatientConsultationSchema = new mongoose.Schema({
         type: Date,
         required: false,
     },
-    consultatedBy: {
-        type: mongoose.Types.ObjectId,
-        required: true,
-        // ref: 'StaffLogin'
+    consultedBy: {
+        type: new mongoose.Schema(
+            {
+                id: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'StaffLogin',
+                    required: true,
+                },
+                name: {
+                    type: String,
+                    trim: true,
+                    required: true,
+                },
+            },
+            { _id: false }
+        ),
     },
     createdAt: {
         type: Date,

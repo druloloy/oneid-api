@@ -11,13 +11,14 @@ const PatientLoginSchema = new mongoose.Schema(
             validate: {
                 validator: function (v) {
                     let number = v.replaceAll(/\D/g, '');
-                    return /\d{10}/.test(number);
+                    return /^([9]\d{9})$/.test(number);
                 },
             },
         },
         password: {
             type: String,
             required: true,
+            minlength: 8,
             select: false,
         },
         sessionId: {
@@ -106,7 +107,7 @@ PatientLoginSchema.methods.generateSessionId = async function () {
         mobileNumber: this.mobileNumber,
     }).select('sessionId');
 
-    const sid = generateSessionId('7d');
+    const sid = generateSessionId('30d');
     patient.sessionId = sid;
     patient.save();
 

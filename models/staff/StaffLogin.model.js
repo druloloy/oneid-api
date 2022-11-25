@@ -76,7 +76,6 @@ StaffLoginSchema.methods.toJSON = function () {
     delete staffObject.sessionId;
     delete staffObject.otp;
     delete staffObject.__v;
-    delete staffObject._id;
     delete staffObject.createdAt;
     delete staffObject.updatedAt;
 

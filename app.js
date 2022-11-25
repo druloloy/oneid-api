@@ -9,9 +9,32 @@ const errorHandler = require('./error/errorHandler');
 const { shortdatems, shortdate } = require('./helpers/shortdate');
 const csrf = require('csurf');
 const QServer = require('./queue/qserver');
+const ExpressBrute = require('express-brute');
+const MongooseStore = require('express-brute-mongoose');
+const Bruteforce = require('./models/security/Bruteforce.model');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+const bruteStore = new MongooseStore(Bruteforce);
+const bruteForce = new ExpressBrute(bruteStore, {
+    freeRetries: 4,
+    minWait: 1 * 60 * 1000, // 5 minutes
+    maxWait: 60 * 60 * 1000, // 1 hour,
+    failCallback: (req, res, next, nextValidRequestDate) => {
+        // time left
+        const timeLeft = Math.ceil((nextValidRequestDate - Date.now()) / 1000); // in seconds
+        res.status(403).json({
+            message: `Too many requests. Try again after ${timeLeft} seconds.`,
+            status: 403,
+            timestamp: new Date(),
+            path: '/',
+        });
+    },
+});
+
+exports.bruteForce = bruteForce;
 
 const version = 'v1';
 const base = `/api/${version}`;
@@ -30,7 +53,7 @@ const csrfProtection = csrf({
 app.use(express.json());
 app.use(
     cors({
-        origin: '*',
+        origin: ['*', 'http://localhost:3000', 'http://localhost:5000'],
         credentials: true,
     })
 );
@@ -78,6 +101,14 @@ app.get('/queue', (_req, res) => {
 // connect to database
 MongoDB.connect();
 
+// bind req.isAuthenticated function
+app.use((req, res, next) => {
+    req.isAuthenticated = () => false;
+    next();
+});
+
+app.use('/static', express.static(path.join(__dirname, '/views')));
+
 // patient
 app.use(base + '/patient', require('./routes/patient.route'));
 
@@ -87,7 +118,11 @@ app.use(base + '/staff', require('./routes/staff.route'));
 // csrf
 app.use(base + '/csrf', require('./routes/csrf.route'));
 
-app.use('/', require('./routes/sample.route'));
+// admin
+app.use(base + '/admin', require('./routes/admin.route'));
+
+// experimental
+app.use(base + '/dev', require('./routes/sample.route'));
 
 // error handler
 app.use(errorHandler);
