@@ -9,12 +9,16 @@ const {
     getStaff,
     getStaffs,
     signupAdmin,
+    backupDatabase,
+    backupPatientsInfo,
 } = require('../controllers/admin.controller');
 const { authAdmin } = require('../security/auth/auth');
 
 router.post('/signup', signupAdmin);
 router.post('/login', loginAdmin);
 router.get('/staff', getStaffs);
+router.get('/backup/all', backupDatabase);
+router.get('/backup/patients', backupPatientsInfo);
 router.use(authAdmin);
 
 router.post('/new', createAdmin);

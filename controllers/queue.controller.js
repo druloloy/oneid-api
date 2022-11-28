@@ -4,7 +4,6 @@ const Queue = require('../models/patient/Queue.model');
 const aes = require('../security/aes/aes');
 const { PatientDetails } = require('../models/patient/PatientDetails.model');
 const PatientMedical = require('../models/patient/PatientMedical.model');
-const PatientVisit = require('../models/patient/PatientVisit.model');
 const PatientConsultation = require('../models/patient/PatientConsultation.model');
 
 exports.addToQueue = (socket, namespace) => {
@@ -24,16 +23,11 @@ exports.addToQueue = (socket, namespace) => {
 
             const queue = new Queue({
                 _id: patient._id,
-                patient: patient,
+                patient,
                 purpose,
             });
 
-            const visit = new PatientVisit({
-                patientId: patient._id,
-                purpose,
-            });
-
-            await Promise.all([queue.save(), visit.save()]);
+            await queue.save();
 
             socket.emit('success', 'Patient added to queue');
             await this.getAllInQueue((patients) => {
@@ -56,10 +50,9 @@ exports.removeFromQueue = (socket, namespace) => {
                 );
             }
 
-            await Promise.all([
-                Queue.deleteOne({ _id: patient._id }),
-                PatientVisit.deleteOne({ patientId: patient._id }),
-            ]);
+            await Queue.deleteOne({
+                _id: patient._id,
+            });
 
             socket.emit('success', 'Patient removed from queue');
             await this.getAllInQueue((patients) => {

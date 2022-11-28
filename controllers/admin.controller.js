@@ -3,6 +3,17 @@ const Admin = require('../models/admin/admin.model');
 const StaffLogin = require('../models/staff/StaffLogin.model');
 const StaffDetails = require('../models/staff/StaffDetails.model');
 const aes = require('../security/aes/aes');
+const PatientLogin = require('../models/patient/PatientLogin.model');
+const { PatientDetails } = require('../models/patient/PatientDetails.model');
+const PatientMedical = require('../models/patient/PatientMedical.model');
+const PatientConsultation = require('../models/patient/PatientConsultation.model');
+const QueueHistory = require('../models/patient/QueueHistory.model');
+const json2csv = require('json2csv');
+const JSZip = require('jszip');
+/** TODO
+ * 1. Create database backup
+ * 2. Create patient information backup
+ */
 
 exports.signupAdmin = async (req, res, next) => {
     try {
@@ -181,6 +192,166 @@ exports.getStaff = async (req, res, next) => {
                 login: staff.toJSON(),
                 details: details.toJson(),
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.backupDatabase = async (req, res, next) => {
+    try {
+        // fetch all collections
+        Promise.all([
+            PatientLogin.find(),
+            PatientDetails.find(),
+            PatientMedical.find(),
+            PatientConsultation.find(),
+            QueueHistory.find(),
+            StaffLogin.find(),
+            StaffDetails.find(),
+        ]).then((collections) => {
+            // destructure collections
+            const [
+                patientLogins,
+                patientDetails,
+                patientMedicals,
+                patientConsultations,
+                queueHistories,
+                staffLogins,
+                staffDetails,
+            ] = collections;
+
+            // create csv
+            Promise.all([
+                json2csv.parseAsync(
+                    patientLogins.map((login) => login.toObject())
+                ),
+                json2csv.parseAsync(
+                    patientDetails.map((detail) => detail.toObject())
+                ),
+                json2csv.parseAsync(
+                    patientMedicals.map((medical) => medical.toObject())
+                ),
+                json2csv.parseAsync(
+                    patientConsultations.map((consultation) =>
+                        consultation.toObject()
+                    )
+                ),
+                json2csv.parseAsync(
+                    queueHistories.map((history) => history.toObject())
+                ),
+                json2csv.parseAsync(
+                    staffLogins.map((login) => login.toObject())
+                ),
+                json2csv.parseAsync(
+                    staffDetails.map((detail) => detail.toObject())
+                ),
+            ]).then((csvs) => {
+                // destructure csvs
+                const [
+                    patientLoginsCsv,
+                    patientDetailsCsv,
+                    patientMedicalsCsv,
+                    patientConsultationsCsv,
+                    queueHistoriesCsv,
+                    staffLoginsCsv,
+                    staffDetailsCsv,
+                ] = csvs;
+
+                // create zip
+                const zip = new JSZip();
+                const folder = zip.folder(`backup-${new Date().toISOString()}`);
+
+                // add csvs to zip
+                folder.file('patientLogins.csv', patientLoginsCsv);
+                folder.file('patientDetails.csv', patientDetailsCsv);
+                folder.file('patientMedicals.csv', patientMedicalsCsv);
+                folder.file(
+                    'patientConsultations.csv',
+                    patientConsultationsCsv
+                );
+                folder.file('queueHistories.csv', queueHistoriesCsv);
+                folder.file('staffLogins.csv', staffLoginsCsv);
+                folder.file('staffDetails.csv', staffDetailsCsv);
+
+                // send zip
+                zip.generateAsync({ type: 'nodebuffer' }).then((content) => {
+                    res.writeHead(200, {
+                        'Content-Type': 'application/zip',
+                        'Content-disposition':
+                            'attachment; filename=backup.zip',
+                    });
+                    res.end(content);
+                });
+            });
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.backupPatientsInfo = async (req, res, next) => {
+    try {
+        // fetch all collections
+        Promise.all([
+            PatientLogin.find(),
+            PatientDetails.find(),
+            PatientMedical.find(),
+            PatientConsultation.find(),
+            QueueHistory.find(),
+        ]).then((collections) => {
+            // destructure collections
+            const [
+                patientLogins,
+                patientDetails,
+                patientMedicals,
+                patientConsultations,
+                queueHistories,
+            ] = collections;
+
+            // create csv
+            Promise.all([
+                json2csv.parseAsync(patientLogins),
+                json2csv.parseAsync(patientDetails),
+                json2csv.parseAsync(patientMedicals),
+                json2csv.parseAsync(patientConsultations),
+                json2csv.parseAsync(queueHistories),
+            ]).then((csvs) => {
+                // destructure csvs
+                const [
+                    patientLoginsCsv,
+                    patientDetailsCsv,
+                    patientMedicalsCsv,
+                    patientConsultationsCsv,
+                    queueHistoriesCsv,
+                ] = csvs;
+
+                // create zip
+                const zip = new JSZip();
+                const folder = zip.folder(
+                    `backup_patients_information-${new Date().toISOString()}`
+                );
+
+                // add csvs to zip
+                folder.file('patientLogins.csv', patientLoginsCsv);
+                folder.file('patientDetails.csv', patientDetailsCsv);
+                folder.file('patientMedicals.csv', patientMedicalsCsv);
+                folder.file(
+                    'patientConsultations.csv',
+                    patientConsultationsCsv
+                );
+                folder.file('queueHistories.csv', queueHistoriesCsv);
+
+                // send zip
+                zip.generateAsync({ type: 'nodebuffer' }).then((content) => {
+                    res.writeHead(200, {
+                        'Content-Type': 'application/zip',
+                        'Content-disposition':
+                            'attachment; filename=backup.zip',
+                    });
+                    res.end(content);
+                });
+            });
         });
     } catch (error) {
         next(error);

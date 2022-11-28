@@ -25,10 +25,6 @@ const QueueSchema = new mongoose.Schema(
             ],
             required: true,
         },
-        queueNumber: {
-            type: Number,
-            required: false,
-        },
         timeStarted: {
             type: Date,
             default: Date.now,
@@ -46,27 +42,11 @@ const QueueSchema = new mongoose.Schema(
             enum: ['Waiting', 'Ongoing', 'Finished'],
             default: 'Waiting',
         },
-        expires: {
-            type: Date,
-            index: { expires: '10h' },
-        },
     },
     {
         timestamps: true,
     }
 );
-
-QueueSchema.pre('save', async function (next) {
-    // get the last queue number
-    const lastQueue = await Queue.findOne().sort({ queueNumber: -1 });
-    if (!lastQueue) {
-        this.queueNumber = 1;
-        next();
-    }
-
-    this.queueNumber = lastQueue.queueNumber + 1;
-    next();
-});
 
 QueueSchema.pre('findOneAndUpdate', async function (next) {
     const { status } = this.getUpdate();
@@ -74,14 +54,9 @@ QueueSchema.pre('findOneAndUpdate', async function (next) {
         this.timeServiced = Date.now();
     } else if (status === 'Finished') {
         this.timeEnded = Date.now();
-        // move to history
-        const queue = await Queue.findOne(this.getQuery());
-        const queueHistory = new QueueHistory(queue);
-        await queueHistory.save();
-        await Queue.deleteOne(this.getQuery());
     }
     next();
 });
 
-const Queue = mongoose.model('Queue', QueueSchema);
-module.exports = Queue;
+const QueueHistory = mongoose.model('QueueHistory', QueueSchema);
+module.exports = QueueHistory;
