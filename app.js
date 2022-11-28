@@ -133,7 +133,18 @@ const server = require('http').createServer(app);
 // start queue server
 QServer.init(server);
 
-server.listen(port, () => console.log(`Server started on port ${port}`));
+server.listen(port, () => {
+    // get protocol
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    // get hostname
+    const hostname = server.address().address;
+    // get port
+    const port = server.address().port;
+    // get url
+    const url = `${protocol}://${hostname}:${port}`;
+    // log url
+    console.log(`Server is running on ${url}`);
+});
 
 const rejectionHandler = (err) => {
     console.warn('Server timed out!');
