@@ -23,6 +23,9 @@ module.exports = async function (id, name = { firstName, lastName, suffix }) {
     const imageId = await html2img({
         html,
         content,
+        puppeteerArgs: {
+            args: ['--no-sandbox'],
+        },
     });
 
     // return base64 image
