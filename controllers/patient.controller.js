@@ -205,6 +205,7 @@ exports.addMedical = async (req, res, next) => {
         });
         await patientMedical.save();
         patient.accountCompleted = true;
+        await patient.save();
         res.status(201).json({
             success: true,
             message: 'Medical details added successfully',
@@ -319,7 +320,7 @@ exports.generateId = async (req, res, next) => {
         if (!patientDetails)
             return next(new Exception('Patient details not found', 404));
 
-        const image = await GenOneId(patient._id.toString(), {
+        const image = await GenOneId(patient._uid, {
             firstName: patientDetails.firstName,
             lastName: patientDetails.lastName,
             suffix: patientDetails.suffix,

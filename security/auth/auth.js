@@ -23,6 +23,7 @@ exports.auth = async (req, res, next) => {
         if (!isMatch) return next(new Exception('Please login again.', 401));
 
         req.user = patient;
+        req.user._uid = _uid;
         req.isAuthenticated = () => req.user !== undefined;
         next();
     } catch (error) {

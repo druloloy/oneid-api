@@ -134,16 +134,7 @@ const server = require('http').createServer(app);
 QServer.init(server);
 
 server.listen(port, () => {
-    // get protocol
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    // get hostname
-    const hostname = server.address().address;
-    // get port
-    const port = server.address().port;
-    // get url
-    const url = `${protocol}://${hostname}:${port}`;
-    // log url
-    console.log(`Server is running on ${url}`);
+    console.log(`Server is running.`);
 });
 
 const rejectionHandler = (err) => {

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { PatientDetailsSchema } = require('./PatientDetails.model');
+const QueueHistory = require('./QueueHistory.model');
 
 const QueueSchema = new mongoose.Schema(
     {
@@ -58,6 +59,9 @@ const QueueSchema = new mongoose.Schema(
 
 QueueSchema.pre('save', async function (next) {
     // get the last queue number
+
+    if (!this.isNew) return next();
+
     const lastQueue = await Queue.findOne().sort({ queueNumber: -1 });
     if (!lastQueue) {
         this.queueNumber = 1;
@@ -68,20 +72,29 @@ QueueSchema.pre('save', async function (next) {
     next();
 });
 
-QueueSchema.pre('findOneAndUpdate', async function (next) {
-    const { status } = this.getUpdate();
+QueueSchema.methods.toggleStatus = async function (status) {
+    this.status = status;
     if (status === 'Ongoing') {
         this.timeServiced = Date.now();
     } else if (status === 'Finished') {
         this.timeEnded = Date.now();
         // move to history
-        const queue = await Queue.findOne(this.getQuery());
-        const queueHistory = new QueueHistory(queue);
+        const queue = await Queue.findOne(this._id);
+        const queueHistory = new QueueHistory({
+            patient: queue.patient,
+            purpose: queue.purpose,
+            timeStarted: queue.timeStarted,
+            timeServiced: queue.timeServiced,
+            timeEnded: queue.timeEnded,
+        });
         await queueHistory.save();
-        await Queue.deleteOne(this.getQuery());
+        await queue.remove();
+
+        return;
     }
-    next();
-});
+
+    await this.save();
+};
 
 const Queue = mongoose.model('Queue', QueueSchema);
 module.exports = Queue;

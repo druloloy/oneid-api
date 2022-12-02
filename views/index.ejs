@@ -32,7 +32,12 @@
         <main
             class="w-100 h-100 bg-light d-flex flex-column justify-content-center align-items-center p-4">
             <h1 class="fw-bold text-darker">Patient Queue</h1>
-
+            <input type="text" class="form-control w-50" id="patientId" placeholder="Patient Id" />
+            <select id="purpose">
+                <option value="Consultation" checked>Consultation</option>
+                <option value="COVID Vaccine">COVID Vaccine</option>
+                <option value="Other Vaccine">Other Vaccine</option>
+            </select>
             <div
                 class="w-100 d-flex flex-column justify-content-start align-items-start border-2 border-primary">
                 <div id="patient-queue" class="w-100 d-flex flex-column justifycontent-start align-items-center">
@@ -40,13 +45,18 @@
                 <div class="w-100 p-2 d-flex gap-2">
                     <button class="w-100 btn btn-primary rounded-3 fw-bold" onclick="add()">Add</button>
                     <button class="w-100 btn btn-outline-danger rounded-3 fw-bold" onclick="remove()">Remove</button>
-                    <button class="w-100 btn btn-outline-secondary rounded-3 fw-bold" onclick="select()">Select</button>
+                    <button class="w-100 btn btn-outline-secondary rounded-3 fw-bold" onclick="toggle()">Select</button>
                 </div>
+                <select id="status">
+                    <option value="Waiting" checked>Waiting</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Finished">Finished</option>
+                </select>
             </div>
         </main>
 
         <script>
-            const socket = io.connect('http://localhost:5000/live', {
+            const socket = io.connect('http://localhost:5000/live_staff', {
                 transports: ['websocket'],
                 reconnectionAttempts: 3,
                 withCredentials: true,
@@ -55,7 +65,8 @@
             function add() {
                 socket.emit(
                     'queue::add',
-                    'J-9kR3blX9r04KdK6pX3Rl9kEW9NxKdwYrgScFOGJ6M'
+                    document.querySelector('#patientId').value,
+                    document.querySelector('#purpose').value
                 );
             }
             function remove() {
@@ -66,10 +77,12 @@
                     id
                 );
             }
-            function select(){
+            function toggle(){
                 const id = document.querySelector('input[name="queue"]:checked').value;
-                console.log("selected:", id);
-                socket.emit('queue::select', id);
+                const status = document.querySelector('#status').value;
+                // alert confirm
+                alert(`Are you sure you want to change the status of ${id} to ${status}?`);
+                socket.emit('queue::toggle', id, status);
             }
 
             socket.on('queue::one', patient=>{
@@ -100,7 +113,7 @@
                     const label = document.createElement('label');
                     label.setAttribute('for', "label-"+data._id);
                     label.classList.add('lbl','w-100', 'd-flex', 'flex-row', 'justify-content-between', 'align-items-center', 'gap-4', 'p-4', 'rounded-3');
-                    label.innerHTML = `QUEUE ${data.queueNumber}: ${data.patient.firstName} ${data.patient.lastName}`;
+                    label.innerHTML = `QUEUE ${data.queueNumber}: ${data.patient.firstName} ${data.patient.lastName} --- ${data.status}`;
                     
                     box.appendChild(input);
                     box.appendChild(label);
@@ -118,10 +131,10 @@
             });
             
             socket.on('connect_error', (err) => {
-                alert('Connection error: ' + err.message);
+                alert('Connection error: ' + err);
             });
             socket.on('connect_failed', (err) => {
-                alert('Connection failed: ' + err.message);
+                alert('Connection failed: ' + err);
             });
 
             // window.addEventListener('load', () => {

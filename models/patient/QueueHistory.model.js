@@ -3,11 +3,6 @@ const { PatientDetailsSchema } = require('./PatientDetails.model');
 
 const QueueSchema = new mongoose.Schema(
     {
-        _id: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'PatientDetails',
-        },
         patient: {
             type: PatientDetailsSchema,
             required: true,
@@ -37,26 +32,11 @@ const QueueSchema = new mongoose.Schema(
             type: Date,
             required: false,
         },
-        status: {
-            type: String,
-            enum: ['Waiting', 'Ongoing', 'Finished'],
-            default: 'Waiting',
-        },
     },
     {
         timestamps: true,
     }
 );
-
-QueueSchema.pre('findOneAndUpdate', async function (next) {
-    const { status } = this.getUpdate();
-    if (status === 'Ongoing') {
-        this.timeServiced = Date.now();
-    } else if (status === 'Finished') {
-        this.timeEnded = Date.now();
-    }
-    next();
-});
 
 const QueueHistory = mongoose.model('QueueHistory', QueueSchema);
 module.exports = QueueHistory;
