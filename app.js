@@ -92,11 +92,11 @@ app.use(
 //     next();
 // });
 
-app.use(
-    helmet({
-        contentSecurityPolicy: false,
-    })
-);
+// app.use(
+//     helmet({
+//         contentSecurityPolicy: false,
+//     })
+// );
 
 app.set('view engine', 'ejs');
 app.get('/queue', (_req, res) => {

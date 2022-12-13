@@ -33,6 +33,7 @@ exports.loginStaff = async (req, res, next) => {
         res.cookie('_uid', aes.encrypt(userId));
         res.cookie('_r', aes.encrypt(staffLogin.role), {
             httpOnly: true,
+            secure: true,
         });
 
         res.status(200).json({
