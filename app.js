@@ -54,7 +54,8 @@ app.use(express.json());
 app.use(
     cors({
         origin: [
-            '*',
+            'http://127.0.0.1:3000',
+            'http://127.0.0.1:3001',
             'https://oneid-clinic.netlify.app',
             'https://oneid-admin.netlify.app',
         ],

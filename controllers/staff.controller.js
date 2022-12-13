@@ -31,7 +31,9 @@ exports.loginStaff = async (req, res, next) => {
         const userId = staffLogin._id.toHexString();
         res.cookie('_sid', sid);
         res.cookie('_uid', aes.encrypt(userId));
-        res.cookie('_r', aes.encrypt(staffLogin.role), { http: false });
+        res.cookie('_r', aes.encrypt(staffLogin.role), {
+            httpOnly: true,
+        });
 
         res.status(200).json({
             success: true,
