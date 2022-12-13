@@ -53,7 +53,11 @@ const csrfProtection = csrf({
 app.use(express.json());
 app.use(
     cors({
-        origin: ['*', 'https://oneid-clinic.netlify.app'],
+        origin: [
+            '*',
+            'https://oneid-clinic.netlify.app',
+            'https://oneid-admin.netlify.app',
+        ],
         credentials: true,
     })
 );
