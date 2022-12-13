@@ -53,7 +53,7 @@ const csrfProtection = csrf({
 app.use(express.json());
 app.use(
     cors({
-        origin: ['http://localhost:*'],
+        origin: '*',
         credentials: true,
     })
 );
