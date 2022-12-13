@@ -54,16 +54,8 @@ exports.loginAdmin = async (req, res, next) => {
 
         const sid = await admin.generateSessionId();
 
-        res.cookie('_sid', sid, {
-            secure: true,
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24,
-        });
-        res.cookie('_uid', aes.encrypt(admin._id.toHexString()), {
-            secure: true,
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24,
-        });
+        res.cookie('_sid', sid);
+        res.cookie('_uid', aes.encrypt(admin._id.toHexString()));
 
         res.status(200).json({
             message: 'Login successful',

@@ -49,7 +49,6 @@ const csrfProtection = csrf({
     value: (req) => req.cookies['xs'],
 });
 
-app.use(express.json());
 app.use(
     cors({
         origin: [
@@ -65,8 +64,9 @@ app.use(
 );
 app.use(
     cookieParser('secret', {
-        httpOnly: process.env.NODE_ENV === 'production',
-        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
         maxAge: shortdatems('7d'),
     })
 );
@@ -92,11 +92,13 @@ app.use(
 //     next();
 // });
 
-// app.use(
-//     helmet({
-//         contentSecurityPolicy: false,
-//     })
-// );
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+    })
+);
+
+app.use(express.json());
 
 app.set('view engine', 'ejs');
 app.get('/queue', (_req, res) => {
