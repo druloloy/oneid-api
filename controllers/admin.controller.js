@@ -58,13 +58,11 @@ exports.loginAdmin = async (req, res, next) => {
             secure: true,
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24,
-            sameSite: 'Strict',
         });
         res.cookie('_uid', aes.encrypt(admin._id.toHexString()), {
             secure: true,
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24,
-            sameSite: 'Lax',
         });
 
         res.status(200).json({

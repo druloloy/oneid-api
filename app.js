@@ -42,7 +42,6 @@ const csrfProtection = csrf({
     cookie: {
         httpOnly: process.env.NODE_ENV === 'production',
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
         maxAge: shortdatems('7d'),
         key: '_xc',
     },
@@ -66,7 +65,6 @@ app.use(
     cookieParser('secret', {
         httpOnly: process.env.NODE_ENV === 'production',
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
         maxAge: shortdatems('7d'),
     })
 );
