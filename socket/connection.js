@@ -9,7 +9,6 @@ const {
 } = require('../controllers/queue.controller');
 
 exports.staffConnection = async (socket) => {
-    console.log('QUEUE SERVER: Client connected!');
     const nsp = socket.nsp;
 
     socket.join('queue');

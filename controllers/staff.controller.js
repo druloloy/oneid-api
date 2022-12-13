@@ -101,6 +101,20 @@ exports.addDetails = async (req, res, next) => {
     }
 };
 
+exports.getMe = async (req, res, next) => {
+    try {
+        const staff = req.user;
+        const login = await StaffLogin.findById(staff._id);
+
+        res.status(200).json({
+            success: true,
+            content: login,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 exports.consultPatient = async (req, res, next) => {
     try {
         const staff = req.user;

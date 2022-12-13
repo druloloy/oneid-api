@@ -10,17 +10,18 @@ exports.auth = async (req, res, next) => {
         const { _sid, _uid } = req.cookies;
 
         if (!_sid || !_uid)
-            return next(new Exception('Please login again.', 401));
+            return next(new Exception('Please login again.', 403));
 
         const uid = aes.decrypt(_uid);
         const patient = await PatientLogin.findById(uid);
-        if (!patient) return next(new Exception('Please login again.', 401));
+        if (!patient) return next(new Exception('Please login again.', 403));
 
         const isValid = verifySessionId(_sid); // checks if session id is expired
-        if (!isValid) return next(new Exception('Please login again.', 401));
-
+        if (!isValid) {
+            return next(new Exception('Please login again.', 403));
+        }
         const isMatch = await patient.compareSession(_sid);
-        if (!isMatch) return next(new Exception('Please login again.', 401));
+        if (!isMatch) return next(new Exception('Please login again.', 403));
 
         req.user = patient;
         req.user._uid = _uid;
@@ -36,17 +37,18 @@ exports.authStaff = async (req, res, next) => {
         const { _sid, _uid } = req.cookies;
 
         if (!_sid || !_uid)
-            return next(new Exception('Please login again.', 401));
+            return next(new Exception('Please login again.', 403));
 
         const uid = aes.decrypt(_uid);
         const staff = await StaffLogin.findById(uid);
-        if (!staff) return next(new Exception('Please login again.', 401));
+        if (!staff) return next(new Exception('Please login again.', 403));
 
         const isValid = verifySessionId(_sid); // checks if session id is expired
-        if (!isValid) return next(new Exception('Please login again.', 401));
-
+        if (!isValid) {
+            return next(new Exception('Please login again.', 403));
+        }
         const isMatch = await staff.compareSession(_sid);
-        if (!isMatch) return next(new Exception('Please login again.', 401));
+        if (!isMatch) return next(new Exception('Please login again.', 403));
 
         req.user = staff;
         req.isAuthenticated = () => req.user !== undefined;
@@ -61,7 +63,7 @@ exports.forPhys = async (req, res, next) => {
         const { _r } = req.cookies;
         const role = aes.decrypt(_r);
         if (role !== 'phys')
-            return next(new Exception('Unauthorized', 401, true));
+            return next(new Exception('Unauthorized', 403, true));
 
         req.role = role;
         next();
@@ -75,17 +77,21 @@ exports.authAdmin = async (req, res, next) => {
         const { _sid, _uid } = req.cookies;
 
         if (!_sid || !_uid)
-            return next(new Exception('Please login again.', 401));
+            return next(new Exception('Please login again.', 403));
 
         const uid = aes.decrypt(_uid);
         const admin = await Admin.findById(uid);
-        if (!admin) return next(new Exception('Please login again.', 401));
+        if (!admin) {
+            return next(new Exception('Please login again.', 403));
+        }
 
         const isValid = verifySessionId(_sid); // checks if session id is expired
-        if (!isValid) return next(new Exception('Please login again.', 401));
+        if (!isValid) {
+            return next(new Exception('Please login again.', 403));
+        }
 
         const isMatch = await admin.compareSession(_sid);
-        if (!isMatch) return next(new Exception('Please login again.', 401));
+        if (!isMatch) return next(new Exception('Please login again.', 403));
 
         req.user = admin;
         req.isAuthenticated = () => req.user !== undefined;

@@ -79,16 +79,15 @@ QueueSchema.methods.toggleStatus = async function (status) {
     } else if (status === 'Finished') {
         this.timeEnded = Date.now();
         // move to history
-        const queue = await Queue.findOne(this._id);
         const queueHistory = new QueueHistory({
-            patient: queue.patient,
-            purpose: queue.purpose,
-            timeStarted: queue.timeStarted,
-            timeServiced: queue.timeServiced,
-            timeEnded: queue.timeEnded,
+            patient: this.patient,
+            purpose: this.purpose,
+            timeStarted: this.timeStarted,
+            timeServiced: this.timeServiced,
+            timeEnded: this.timeEnded,
         });
         await queueHistory.save();
-        await queue.remove();
+        await this.remove();
 
         return;
     }

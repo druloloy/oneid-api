@@ -31,6 +31,7 @@
     "mongoose": "^6.6.0",
     "node-html-to-image": "^3.2.4",
     "qrcode": "^1.5.1",
+    "skmeans": "^0.11.3",
     "socket.io": "^4.5.2",
     "uuid": "^9.0.0"
   },

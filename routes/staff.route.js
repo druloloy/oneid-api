@@ -8,6 +8,7 @@ const {
     getPatientDetails,
     getPatientLogin,
     getPatientConsultations,
+    getMe,
 } = require('../controllers/staff.controller');
 const { forPhys, authStaff } = require('../security/auth/auth');
 
@@ -15,6 +16,7 @@ router.post('/login', loginStaff);
 
 router.use(authStaff);
 
+router.get('/me', getMe);
 router.get('/patient/l', getPatientLogin);
 router.get('/patient/d', getPatientDetails);
 router.get('/patient/m', getPatientMedical);

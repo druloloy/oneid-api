@@ -13,6 +13,7 @@ const aesOptions = {
 };
 
 const encrypt = (text) => {
+    if (!text) return null;
     const cipher = crypto.createCipheriv(
         aesOptions.algorithm,
         aesOptions.key,
@@ -23,6 +24,7 @@ const encrypt = (text) => {
 };
 
 const decrypt = (text) => {
+    if (!text) return null;
     const decipher = crypto.createDecipheriv(
         aesOptions.algorithm,
         aesOptions.key,

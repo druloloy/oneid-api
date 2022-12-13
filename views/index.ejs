@@ -23,7 +23,7 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
         <style>
-           input[type="radio"]:checked + .lbl{
+            input[type='radio']:checked + .lbl {
                 background-color: rgba(0, 0, 255, 0.144) !important;
             }
         </style>
@@ -32,7 +32,11 @@
         <main
             class="w-100 h-100 bg-light d-flex flex-column justify-content-center align-items-center p-4">
             <h1 class="fw-bold text-darker">Patient Queue</h1>
-            <input type="text" class="form-control w-50" id="patientId" placeholder="Patient Id" />
+            <input
+                type="text"
+                class="form-control w-50"
+                id="patientId"
+                placeholder="Patient Id" />
             <select id="purpose">
                 <option value="Consultation" checked>Consultation</option>
                 <option value="COVID Vaccine">COVID Vaccine</option>
@@ -40,12 +44,25 @@
             </select>
             <div
                 class="w-100 d-flex flex-column justify-content-start align-items-start border-2 border-primary">
-                <div id="patient-queue" class="w-100 d-flex flex-column justifycontent-start align-items-center">
-                </div>  
+                <div
+                    id="patient-queue"
+                    class="w-100 d-flex flex-column justifycontent-start align-items-center"></div>
                 <div class="w-100 p-2 d-flex gap-2">
-                    <button class="w-100 btn btn-primary rounded-3 fw-bold" onclick="add()">Add</button>
-                    <button class="w-100 btn btn-outline-danger rounded-3 fw-bold" onclick="remove()">Remove</button>
-                    <button class="w-100 btn btn-outline-secondary rounded-3 fw-bold" onclick="toggle()">Select</button>
+                    <button
+                        class="w-100 btn btn-primary rounded-3 fw-bold"
+                        onclick="add()">
+                        Add
+                    </button>
+                    <button
+                        class="w-100 btn btn-outline-danger rounded-3 fw-bold"
+                        onclick="remove()">
+                        Remove
+                    </button>
+                    <button
+                        class="w-100 btn btn-outline-secondary rounded-3 fw-bold"
+                        onclick="toggle()">
+                        Select
+                    </button>
                 </div>
                 <select id="status">
                     <option value="Waiting" checked>Waiting</option>
@@ -56,7 +73,13 @@
         </main>
 
         <script>
-            const socket = io.connect('http://localhost:5000/live_staff', {
+            const prodUrl = 'oneid.up.railway.app/queue';
+            const devUrl = 'localhost:5000/live_staff';
+            const baseUrl =
+                '<%= process.env.NODE_ENV %>' == 'production'
+                    ? prodUrl
+                    : devUrl;
+            const socket = io.connect(baseUrl, {
                 transports: ['websocket'],
                 reconnectionAttempts: 3,
                 withCredentials: true,
@@ -70,56 +93,86 @@
                 );
             }
             function remove() {
-                const id = document.querySelector('input[name="queue"]:checked').value;
-                console.log(id)
-                socket.emit(
-                    'queue::remove',
-                    id
-                );
+                const id = document.querySelector(
+                    'input[name="queue"]:checked'
+                ).value;
+                console.log(id);
+                socket.emit('queue::remove', id);
             }
-            function toggle(){
-                const id = document.querySelector('input[name="queue"]:checked').value;
+            function toggle() {
+                const id = document.querySelector(
+                    'input[name="queue"]:checked'
+                ).value;
                 const status = document.querySelector('#status').value;
                 // alert confirm
-                alert(`Are you sure you want to change the status of ${id} to ${status}?`);
+                alert(
+                    `Are you sure you want to change the status of ${id} to ${status}?`
+                );
                 socket.emit('queue::toggle', id, status);
             }
 
-            socket.on('queue::one', patient=>{
-                console.log("received patient info", patient)
-            })
+            socket.on('queue::one', (patient) => {
+                console.log('received patient info', patient);
+            });
 
             socket.on('queue::all', (data) => {
-                console.log(data)
-                
+                console.log(data);
+
                 // add to form
                 const container = document.querySelector('#patient-queue');
-                container.innerHTML = ""; // clear
-                data.forEach((data)=>{
-
+                container.innerHTML = ''; // clear
+                data.forEach((data) => {
                     // create box
                     const box = document.createElement('div');
-                    box.classList.add('box','position-relative', 'border-2', 'border-primary', 'p-2', 'w-100', 'd-flex', 'flex-row', 'justify-content-between', 'align-items-center');
-                    box.setAttribute('id', 'box-'+data._id);
+                    box.classList.add(
+                        'box',
+                        'position-relative',
+                        'border-2',
+                        'border-primary',
+                        'p-2',
+                        'w-100',
+                        'd-flex',
+                        'flex-row',
+                        'justify-content-between',
+                        'align-items-center'
+                    );
+                    box.setAttribute('id', 'box-' + data._id);
 
                     const input = document.createElement('input');
-                    input.classList.add('queue', 'w-100','h-100', 'position-absolute', 'top-0', 'start-0');
-                    input.setAttribute('type', 'radio');    
-                    input.setAttribute('id', "patient-"+data._id);
+                    input.classList.add(
+                        'queue',
+                        'w-100',
+                        'h-100',
+                        'position-absolute',
+                        'top-0',
+                        'start-0'
+                    );
+                    input.setAttribute('type', 'radio');
+                    input.setAttribute('id', 'patient-' + data._id);
                     input.setAttribute('name', 'queue');
                     input.setAttribute('value', data._id);
                     input.setAttribute('style', 'opacity: 0');
 
                     const label = document.createElement('label');
-                    label.setAttribute('for', "label-"+data._id);
-                    label.classList.add('lbl','w-100', 'd-flex', 'flex-row', 'justify-content-between', 'align-items-center', 'gap-4', 'p-4', 'rounded-3');
+                    label.setAttribute('for', 'label-' + data._id);
+                    label.classList.add(
+                        'lbl',
+                        'w-100',
+                        'd-flex',
+                        'flex-row',
+                        'justify-content-between',
+                        'align-items-center',
+                        'gap-4',
+                        'p-4',
+                        'rounded-3'
+                    );
                     label.innerHTML = `QUEUE ${data.queueNumber}: ${data.patient.firstName} ${data.patient.lastName} --- ${data.status}`;
-                    
+
                     box.appendChild(input);
                     box.appendChild(label);
-                    
+
                     container.appendChild(box);
-                })
+                });
             });
 
             socket.on('success', (data) => {
@@ -129,7 +182,7 @@
             socket.on('error', (err) => {
                 alert(err);
             });
-            
+
             socket.on('connect_error', (err) => {
                 alert('Connection error: ' + err);
             });
@@ -147,10 +200,9 @@
             //                 d.classList.toggle('text-light');
             //             })
             //         })
-                    
+
             //     }, 2000);
             // });
-
         </script>
     </body>
 </html>

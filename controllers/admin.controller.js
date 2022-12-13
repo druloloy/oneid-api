@@ -10,6 +10,9 @@ const PatientConsultation = require('../models/patient/PatientConsultation.model
 const QueueHistory = require('../models/patient/QueueHistory.model');
 const json2csv = require('json2csv');
 const JSZip = require('jszip');
+const skmeans = require('skmeans');
+const preprocess = require('../helpers/preprocess');
+
 /** TODO
  * 1. Create database backup
  * 2. Create patient information backup
@@ -51,8 +54,18 @@ exports.loginAdmin = async (req, res, next) => {
 
         const sid = await admin.generateSessionId();
 
-        res.cookie('_sid', sid);
-        res.cookie('_uid', aes.encrypt(admin._id.toHexString()));
+        res.cookie('_sid', sid, {
+            secure: true,
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24,
+            sameSite: 'Strict',
+        });
+        res.cookie('_uid', aes.encrypt(admin._id.toHexString()), {
+            secure: true,
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24,
+            sameSite: 'Lax',
+        });
 
         res.status(200).json({
             message: 'Login successful',
@@ -79,6 +92,20 @@ exports.createAdmin = async (req, res, next) => {
         res.status(201).json({
             message: 'Admin created successfully',
             content: admin,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getAdminId = async (req, res, next) => {
+    try {
+        const admin = req.user;
+        const adminId = admin._id;
+
+        res.status(200).json({
+            success: true,
+            content: adminId,
         });
     } catch (error) {
         next(error);
@@ -134,6 +161,8 @@ exports.logoutAdmin = async (req, res, next) => {
     try {
         const admin = req.user;
         admin.sessionId = null;
+        res.clearCookie('_sid');
+        res.clearCookie('_uid');
         await admin.save();
         res.status(200).json({
             message: 'Successfully logged out',
@@ -144,9 +173,9 @@ exports.logoutAdmin = async (req, res, next) => {
 };
 exports.getAdmin = async (req, res, next) => {
     try {
-        const admin = req.admin;
+        const admin = req.user;
         res.status(200).json({
-            content: admin.toJson,
+            content: admin,
         });
     } catch (e) {
         next(e);
@@ -193,6 +222,71 @@ exports.getStaff = async (req, res, next) => {
                 details: details.toJson(),
             },
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getPatients = (req, res, next) => {
+    try {
+        const { offset, limit } = req.query;
+
+        const patients = PatientLogin.find()
+            .skip(offset)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        const details = PatientDetails.find()
+            .skip(offset)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        const medicals = PatientMedical.find()
+            .skip(offset)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+        const consultations = PatientConsultation.find()
+            .skip(offset)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        Promise.all([patients, details, medicals, consultations]).then(
+            (collections) => {
+                const [
+                    patientLogins,
+                    patientDetails,
+                    patientMedicals,
+                    patientConsultations,
+                ] = collections;
+
+                console.log(patientDetails);
+                const patients = patientLogins.map((patient) => {
+                    const id = patient._id;
+                    const details = patientDetails.find(
+                        (detail) => detail._id.toString() === id.toString()
+                    );
+                    const medical = patientMedicals.find(
+                        (medical) => medical._id.toString() === id.toString()
+                    );
+                    const consultation = patientConsultations.filter(
+                        (consultation) =>
+                            consultation.patientId.toString() === id.toString()
+                    );
+                    const p = patient.toJSON();
+                    p._id = id;
+                    return Object.assign(p, {
+                        details,
+                        medical,
+                        consultation: consultation.map((consultation) =>
+                            consultation.toJSON()
+                        ),
+                    });
+                });
+
+                res.status(200).json({
+                    success: true,
+                    content: patients,
+                });
+            }
+        );
     } catch (error) {
         next(error);
     }
@@ -352,6 +446,53 @@ exports.backupPatientsInfo = async (req, res, next) => {
                     res.end(content);
                 });
             });
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.generateClusteredQueueHistory = async (req, res, next) => {
+    try {
+        const { start, end } = req.query;
+        const queueHistories = await QueueHistory.find({
+            createdAt: {
+                $gte: start,
+                $lte: end,
+            },
+        });
+
+        if (queueHistories <= 1) {
+            return res.status(200).json({
+                success: true,
+                content: [],
+            });
+        }
+
+        // preprocess data
+        const preprocessedData = preprocess(queueHistories);
+        // convert to 2d array
+        const data = preprocessedData.map((item) => [
+            item.age,
+            item.waitTime,
+            item.serviceTime,
+        ]);
+
+        const k = 4;
+
+        // cluster data
+        const kmeans = skmeans(data, k);
+        const result = kmeans.idxs;
+        const dataWithClusters = data.map((item, index) => ({
+            age: item[0],
+            waitTime: item[1],
+            serviceTime: item[2],
+            cluster: result[index],
+        }));
+
+        res.status(200).json({
+            success: true,
+            content: dataWithClusters,
         });
     } catch (error) {
         next(error);

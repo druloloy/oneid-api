@@ -8,6 +8,7 @@ const StaffLogin = require('../models/staff/StaffLogin.model');
 const StaffDetails = require('../models/staff/StaffDetails.model');
 const GenOneId = require('../helpers/GenOneId');
 const titleCaser = require('../helpers/titleCaser');
+const QueueHistory = require('../models/patient/QueueHistory.model');
 
 exports.getPersonalLogin = async (req, res, next) => {
     try {
@@ -328,6 +329,40 @@ exports.generateId = async (req, res, next) => {
         res.status(200).json({
             success: true,
             content: image,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.getVisits = async (req, res, next) => {
+    try {
+        const patient = req.user;
+        const history = await QueueHistory.find({
+            'patient._id': patient._id,
+        }).sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            content: history,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.getNextSchedules = async (req, res, next) => {
+    try {
+        const patient = req.user;
+
+        const schedules = await PatientConsultation.find({
+            patientId: patient._id,
+            nextConsultation: { $gt: new Date() },
+        }).sort({ nextConsultation: -1 });
+
+        res.status(200).json({
+            success: true,
+            content: schedules,
         });
     } catch (error) {
         return next(error);

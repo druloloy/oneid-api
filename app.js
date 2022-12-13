@@ -121,6 +121,12 @@ app.use(base + '/csrf', require('./routes/csrf.route'));
 // admin
 app.use(base + '/admin', require('./routes/admin.route'));
 
+// stats
+app.use(base + '/stats', require('./routes/stats.route'));
+
+// security / encryption
+app.use(base + '/security', require('./routes/security.route'));
+
 // experimental
 app.use(base + '/dev', require('./routes/sample.route'));
 
@@ -139,6 +145,7 @@ server.listen(port, () => {
 
 const rejectionHandler = (err) => {
     console.warn('Server timed out!');
+    console.log(err);
     console.log(`ERROR LOG: ${err}`);
     server.close(() => process.exit(1));
 };
