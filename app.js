@@ -14,7 +14,6 @@ const ExpressBrute = require('express-brute');
 const MongooseStore = require('express-brute-mongoose');
 const Bruteforce = require('./models/security/Bruteforce.model');
 const path = require('path');
-const accessHeaders = require('./middlewares/accessHeader');
 
 const app = express();
 app.use(express.json());
