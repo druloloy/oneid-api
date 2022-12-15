@@ -68,10 +68,8 @@ app.use(
     })
 );
 app.use(
-    cookieParser('secret', require('./cookie.config').cookieOptions
+    cookieParser(process.env.COOKIE_SECRET, require('./cookie.config').cookieOptions
 );
-
-app.use(accessHeaders);
 
 app.use(
     compression({
