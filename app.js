@@ -14,6 +14,7 @@ const ExpressBrute = require('express-brute');
 const MongooseStore = require('express-brute-mongoose');
 const Bruteforce = require('./models/security/Bruteforce.model');
 const path = require('path');
+const accessHeaders = require('./middlewares/accessHeader');
 
 const app = express();
 app.use(express.json());
@@ -66,13 +67,9 @@ app.use(
         credentials: true,
     })
 );
-app.use(
-    cookieParser('secret', {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-    })
-);
+app.use(cookieParser('secret'));
+
+app.use(accessHeaders);
 
 app.use(
     compression({
