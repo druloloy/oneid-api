@@ -67,7 +67,14 @@ app.use(
         credentials: true,
     })
 );
-app.use(cookieParser('secret'));
+app.use(
+    cookieParser('secret', {
+        httpOnly: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    })
+);
 
 app.use(accessHeaders);
 
