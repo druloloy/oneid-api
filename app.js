@@ -1,4 +1,5 @@
 if (process.env.NODE_ENV != 'production') require('dotenv').config();
+
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const express = require('express');
@@ -15,6 +16,7 @@ const Bruteforce = require('./models/security/Bruteforce.model');
 const path = require('path');
 
 const app = express();
+app.use(express.json());
 const port = process.env.PORT || 5000;
 
 const bruteStore = new MongooseStore(Bruteforce);
@@ -38,20 +40,22 @@ exports.bruteForce = bruteForce;
 
 const version = 'v1';
 const base = `/api/${version}`;
-const csrfProtection = csrf({
-    cookie: {
-        httpOnly: process.env.NODE_ENV === 'production',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: shortdatems('7d'),
-        key: '_xc',
-    },
-    ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-    value: (req) => req.cookies['xs'],
-});
+
+// const csrfProtection = csrf({
+//     cookie: {
+//         httpOnly: process.env.NODE_ENV === 'production',
+//         secure: process.env.NODE_ENV === 'production',
+//         maxAge: shortdatems('7d'),
+//         key: '_xc',
+//     },
+//     ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+//     value: (req) => req.cookies['xs'],
+// });
 
 app.use(
     cors({
         origin: [
+            '*',
             'http://127.0.0.1:3000',
             'http://127.0.0.1:3001',
             'http://localhost:3000',
@@ -67,7 +71,6 @@ app.use(
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
-        maxAge: shortdatems('7d'),
     })
 );
 
@@ -97,8 +100,6 @@ app.use(
         contentSecurityPolicy: false,
     })
 );
-
-app.use(express.json());
 
 app.set('view engine', 'ejs');
 app.get('/queue', (_req, res) => {
