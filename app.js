@@ -67,9 +67,7 @@ app.use(
         credentials: true,
     })
 );
-app.use(
-    cookieParser(process.env.COOKIE_SECRET, require('./cookie.config').cookieOptions
-);
+app.use(cookieParser(process.env.COOKIE_SECRET, require('./cookie.config')));
 
 app.use(
     compression({
