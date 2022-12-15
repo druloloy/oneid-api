@@ -12,7 +12,7 @@ const json2csv = require('json2csv');
 const JSZip = require('jszip');
 const skmeans = require('skmeans');
 const preprocess = require('../helpers/preprocess');
-
+const cookieConfig = require('../cookie.config');
 /** TODO
  * 1. Create database backup
  * 2. Create patient information backup
@@ -54,8 +54,9 @@ exports.loginAdmin = async (req, res, next) => {
 
         const sid = await admin.generateSessionId();
 
-        res.cookie('_sid', sid);
-        res.cookie('_uid', aes.encrypt(admin._id.toHexString()));
+        cookieConfig.maxAge = 1000 * 60 * 60 * 24; // 1 day
+        res.cookie('_sid', sid, cookieConfig);
+        res.cookie('_uid', aes.encrypt(admin._id.toHexString()), cookieConfig);
 
         res.status(200).json({
             message: 'Login successful',

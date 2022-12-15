@@ -9,6 +9,7 @@ const StaffDetails = require('../models/staff/StaffDetails.model');
 const GenOneId = require('../helpers/GenOneId');
 const titleCaser = require('../helpers/titleCaser');
 const QueueHistory = require('../models/patient/QueueHistory.model');
+const cookieConfig = require('../cookie.config');
 
 exports.getPersonalLogin = async (req, res, next) => {
     try {
@@ -177,8 +178,10 @@ exports.loginAccount = async (req, res, next) => {
         // pass session id and user id
 
         const userId = patientLogin._id.toHexString();
-        res.cookie('_sid', sid);
-        res.cookie('_uid', aes.encrypt(userId));
+
+        cookieConfig.maxAge = 1000 * 60 * 60 * 24 * 30; // 30 days
+        res.cookie('_sid', sid, cookieConfig);
+        res.cookie('_uid', aes.encrypt(userId), cookieConfig);
 
         res.status(200).json({
             success: true,

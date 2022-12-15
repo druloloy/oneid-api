@@ -6,7 +6,7 @@ const aes = require('../security/aes/aes');
 const { PatientDetails } = require('../models/patient/PatientDetails.model');
 const PatientMedical = require('../models/patient/PatientMedical.model');
 const PatientLogin = require('../models/patient/PatientLogin.model');
-
+const cookieConfig = require('../cookie.config');
 exports.loginStaff = async (req, res, next) => {
     try {
         const { username, password } = req.body;
@@ -29,9 +29,11 @@ exports.loginStaff = async (req, res, next) => {
         // pass session id and user id
 
         const userId = staffLogin._id.toHexString();
-        res.cookie('_sid', sid);
-        res.cookie('_uid', aes.encrypt(userId));
-        res.cookie('_r', aes.encrypt(staffLogin.role));
+
+        cookieConfig.maxAge = 1000 * 60 * 60 * 24; // 1 day
+        res.cookie('_sid', sid, cookieConfig);
+        res.cookie('_uid', aes.encrypt(userId), cookieConfig);
+        res.cookie('_r', aes.encrypt(staffLogin.role), cookieConfig);
 
         res.status(200).json({
             success: true,

@@ -68,12 +68,7 @@ app.use(
     })
 );
 app.use(
-    cookieParser('secret', {
-        httpOnly: process.env.NODE_ENV === 'production',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-    })
+    cookieParser('secret', require('./cookie.config').cookieOptions
 );
 
 app.use(accessHeaders);
