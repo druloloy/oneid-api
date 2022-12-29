@@ -4,8 +4,8 @@ const Exception = require('./Exception');
 const errorHandler = (err, req, res, _next) => {
     let error = { ...err };
     error.message = err.message;
-    error.authenticated = req.isAuthenticated() || false;
     console.log(err);
+    error.authenticated = req.isAuthenticated() || false;
 
     if (err.name === 'CastError') {
         const message = 'Address not found!';

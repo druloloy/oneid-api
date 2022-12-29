@@ -89,7 +89,10 @@
                 socket.emit(
                     'queue::add',
                     document.querySelector('#patientId').value,
-                    document.querySelector('#purpose').value
+                    document.querySelector('#purpose').value,
+                    ()=> {
+                        alert('Patient added to queue');
+                    }
                 );
             }
             function remove() {

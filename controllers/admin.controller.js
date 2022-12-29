@@ -105,10 +105,30 @@ const getAdminId = async (req, res, next) => {
 
 exports.createStaffAccount = async (req, res, next) => {
     try {
-        const { username, password, role } = req.body;
+        const {
+            username,
+            password,
+            role,
+            firstName,
+            middleName,
+            lastName,
+            suffix,
+            birthdate,
+            address,
+            mobileNumber,
+        } = req.body;
 
-        if (!username || !password)
-            return next(new Exception('Username or password is missing.', 400));
+        if (
+            !username ||
+            !password ||
+            !role ||
+            !firstName ||
+            !lastName ||
+            !birthdate ||
+            !address ||
+            !mobileNumber
+        )
+            return next(new Exception('Missing required fields.', 400));
 
         const staffLogin = new StaffLogin({
             username,
@@ -116,12 +136,72 @@ exports.createStaffAccount = async (req, res, next) => {
             role,
         });
 
-        await staffLogin.save();
+        await staffLogin.save().then(async (login) => {
+            const staffDetails = new StaffDetails({
+                _id: login._id,
+                firstName,
+                middleName,
+                lastName,
+                suffix,
+                birthdate,
+                address,
+                mobileNumber,
+            });
 
-        res.status(201).json({
-            success: true,
-            message: 'Account created successfully',
-            content: staffLogin,
+            await staffDetails.save().then((details) => {
+                login.accountCompleted = true;
+                login.save();
+                res.status(201).json({
+                    message: 'Staff created successfully',
+                    content: {
+                        login,
+                        details,
+                    },
+                });
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.updateStaffAccount = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+        const {
+            username,
+            password,
+            role,
+            name,
+            birthdate,
+            address,
+            mobileNumber,
+        } = req.body;
+        let login = await StaffLogin.findById(id);
+        if (!login) return next(new Exception('Staff not found', 404));
+
+        if (username) login.username = username;
+        if (password) login.password = password;
+        if (role) login.role = role;
+
+        let details = await StaffDetails.findById(id);
+        if (!details) return next(new Exception('Staff not found', 404));
+
+        if (birthdate) details.birthdate = birthdate;
+        if (address) details.address = address;
+        if (mobileNumber) details.mobileNumber = mobileNumber;
+
+        // for name field
+        if (name) {
+            if (name.firstName) details.firstName = name.firstName;
+            if (name.lastName) details.lastName = name.lastName;
+            details.middleName = name?.middleName || '';
+            details.suffix = name.suffix || '';
+        }
+        Promise.all([login.save(), details.save()]).then(([login, details]) => {
+            res.status(200).json({
+                message: 'Staff updated successfully',
+            });
         });
     } catch (error) {
         return next(error);
@@ -130,7 +210,7 @@ exports.createStaffAccount = async (req, res, next) => {
 
 exports.deleteStaffAccount = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { id } = req.query;
         let details;
         const login = await StaffLogin.findById(id);
         if (!login) return next(new Exception('Staff not found', 404));
@@ -140,7 +220,7 @@ exports.deleteStaffAccount = async (req, res, next) => {
             await details.remove();
         }
 
-        await staff.remove();
+        await login.remove();
 
         res.status(200).json({
             message: 'Staff deleted successfully',
@@ -200,17 +280,42 @@ exports.getStaffs = async (req, res, next) => {
 
 exports.getStaff = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const { id } = req.query;
         const staff = await StaffLogin.findById(id);
         if (!staff) return next(new Exception('Staff not found', 404));
 
         const details = await StaffDetails.findById(id);
-        if (!details) return next(new Exception('Staff not found', 404));
 
         res.status(200).json({
             content: {
                 login: staff.toJSON(),
-                details: details.toJson(),
+                details: details ? details.toJSON() : {},
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getPatient = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+        const login = await PatientLogin.findById(id);
+        if (!login) return next(new Exception('Patient not found', 404));
+
+        const details = (await PatientDetails.findById(id)) || {};
+        const medical = (await PatientMedical.findById(id)) || {};
+        const consultation =
+            (await PatientConsultation.find({ patientId: id }).sort({
+                createdAt: -1,
+            })) || [];
+        res.status(200).json({
+            content: {
+                id,
+                login: login.toJSON(),
+                details: details.toJSON(),
+                medical: medical.toJSON(),
+                consultation: consultation.map((consult) => consult.toObject()),
             },
         });
     } catch (error) {
@@ -248,7 +353,6 @@ exports.getPatients = (req, res, next) => {
                     patientConsultations,
                 ] = collections;
 
-                console.log(patientDetails);
                 const patients = patientLogins.map((patient) => {
                     const id = patient._id;
                     const details = patientDetails.find(
@@ -278,6 +382,55 @@ exports.getPatients = (req, res, next) => {
                 });
             }
         );
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updatePatient = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+        const { name, mobileNumber, password, birthdate, address } = req.body;
+
+        const login = await PatientLogin.findById(id);
+        if (!login) return next(new Exception('Patient not found', 404));
+
+        const details = await PatientDetails.findById(id);
+
+        if (mobileNumber) login.mobileNumber = mobileNumber;
+        if (password) login.password = password;
+        if (birthdate) details.birthdate = birthdate;
+        if (address) details.address = address;
+
+        // for name field
+        if (name) {
+            if (name.firstName) details.firstName = name.firstName;
+            if (name.lastName) details.lastName = name.lastName;
+            details.middleName = name?.middleName || '';
+            details.suffix = name.suffix || '';
+        }
+
+        Promise.all([login.save(), details.save()]).then((collections) => {
+            const [login, details] = collections;
+            res.status(200).json({
+                message: 'Patient updated successfully',
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.deletePatient = async (req, res, next) => {
+    try {
+        const { id } = req.query;
+        const patient = await PatientLogin.findById(id);
+        if (!patient) return next(new Exception('Patient not found', 404));
+        await patient.deleteUser().then(() => {
+            res.status(200).json({
+                message: 'Patient deleted successfully',
+            });
+        });
     } catch (error) {
         next(error);
     }

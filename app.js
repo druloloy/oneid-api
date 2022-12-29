@@ -63,6 +63,7 @@ app.use(
             'https://oneid-clinic.netlify.app',
             'https://oneid-admin.netlify.app',
         ],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         credentials: true,
     })
 );

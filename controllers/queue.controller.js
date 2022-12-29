@@ -7,7 +7,7 @@ const PatientMedical = require('../models/patient/PatientMedical.model');
 const PatientConsultation = require('../models/patient/PatientConsultation.model');
 
 exports.addToQueue = (socket, namespace) => {
-    return async (id, purpose) => {
+    return async (id, purpose, callback) => {
         try {
             const patient = await PatientDetails.findOne({
                 _id: aes.decrypt(id), // id from scanner should be encrypted so we s
@@ -29,7 +29,7 @@ exports.addToQueue = (socket, namespace) => {
 
             await queue.save();
 
-            socket.emit('success', 'Patient added to queue');
+            callback();
             await this.getAllInQueue((patients) => {
                 namespace.to('queue').emit('queue::all', patients);
             });

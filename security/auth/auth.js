@@ -7,6 +7,7 @@ const Admin = require('../../models/admin/admin.model');
 
 exports.auth = async (req, res, next) => {
     try {
+        req.isAuthenticated = () => false;
         const { _sid, _uid } = req.cookies;
 
         if (!_sid || !_uid)
@@ -35,7 +36,7 @@ exports.auth = async (req, res, next) => {
 exports.authStaff = async (req, res, next) => {
     try {
         const { _sid, _uid } = req.cookies;
-
+        req.isAuthenticated = () => false;
         if (!_sid || !_uid)
             return next(new Exception('Please login again.', 403));
 
@@ -75,6 +76,7 @@ exports.forPhys = async (req, res, next) => {
 exports.authAdmin = async (req, res, next) => {
     try {
         const { _sid, _uid } = req.cookies;
+        req.isAuthenticated = () => false;
 
         if (!_sid || !_uid)
             return next(new Exception('Please login again.', 403));

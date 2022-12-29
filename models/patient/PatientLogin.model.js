@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const { generateSessionId } = require('../../helpers/sessionId');
 const bcrypt = require('bcryptjs');
+const { PatientDetails } = require('./PatientDetails.model');
+const Exception = require('../../error/Exception');
+const PatientMedical = require('./PatientMedical.model');
 
 const PatientLoginSchema = new mongoose.Schema(
     {
@@ -118,6 +121,22 @@ PatientLoginSchema.methods.compareSession = async function (sessionId) {
     const patient = await PatientLogin.findById(this._id).select('sessionId');
     if (patient.sessionId != sessionId) return false;
     return true;
+};
+
+PatientLoginSchema.methods.deleteUser = async function () {
+    try {
+        const patientLogin = await PatientLogin.findById(this._id);
+        if (!patientLogin) throw new Exception('User not found', 404);
+        const patientDetails = await PatientDetails.findById(this._id);
+        const patientMedical = await PatientMedical.findById(this._id);
+
+        await patientLogin.remove();
+        if (patientDetails) await patientDetails.remove();
+        if (patientMedical) await patientMedical.remove();
+    } catch (error) {
+        console.log(error);
+        throw new Exception('Problem deleting user', 500);
+    }
 };
 
 const PatientLogin = mongoose.model('PatientLogin', PatientLoginSchema);

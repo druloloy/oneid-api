@@ -13,7 +13,7 @@ const StaffDetailsSchema = new mongoose.Schema({
         trim: true,
         validate: {
             validator: function (v) {
-                return /^[a-zA-Z]+$/.test(v);
+                return /^[a-zA-ZñÑ]+$/.test(v);
             },
             message: (props) => `${props.value} must contain only alphabets`,
         },
@@ -26,7 +26,7 @@ const StaffDetailsSchema = new mongoose.Schema({
         validate: {
             validator: function (v) {
                 if (!v) return true; // middle name is optional
-                return /^[a-zA-Z]+$/.test(v);
+                return /^[a-zA-ZñÑ]+$/.test(v);
             },
             message: (props) => `${props.path} must contain only alphabets`,
         },
@@ -38,7 +38,7 @@ const StaffDetailsSchema = new mongoose.Schema({
         trim: true,
         validate: {
             validator: function (v) {
-                return /^[a-zA-Z]+$/.test(v);
+                return /^[a-zA-ZñÑ]+$/.test(v);
             },
             message: (props) => `${props.path} must contain only alphabets`,
         },
