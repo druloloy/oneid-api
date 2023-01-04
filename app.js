@@ -131,7 +131,7 @@ app.use(base + '/stats', require('./routes/stats.route'));
 app.use(base + '/security', require('./routes/security.route'));
 
 // experimental
-app.use(base + '/dev', require('./routes/sample.route'));
+// app.use(base + '/dev', require('./routes/sample.route'));
 
 // error handler
 app.use(errorHandler);

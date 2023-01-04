@@ -17,11 +17,22 @@ const {
     getPatient,
     updatePatient,
     deletePatient,
+    createSchedule,
+    updateActivities,
+    updateTime,
+    getSchedules,
+    getActivities,
+    removeSchedule,
+    updatePassword,
 } = require('../controllers/admin.controller');
 const { authAdmin } = require('../security/auth/auth');
 
 router.post('/signup', signupAdmin);
 router.post('/login', loginAdmin);
+
+// schedules
+router.get('/schedule', getSchedules);
+router.get('/schedule/activities', getActivities);
 
 router.use(authAdmin);
 
@@ -42,5 +53,15 @@ router.get('/get', getAdmin);
 
 router.get('/staff/get', getStaff);
 
+// schedules
+router.post('/schedule', createSchedule);
+router.put('/schedule/activities', updateActivities);
+router.put('/schedule/time', updateTime);
+router.delete('/schedule', removeSchedule);
+
+// password
+router.put('/password', updatePassword);
+
+// queue history
 router.get('/queueHistory', generateClusteredQueueHistory);
 module.exports = router;

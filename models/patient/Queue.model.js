@@ -15,15 +15,6 @@ const QueueSchema = new mongoose.Schema(
         },
         purpose: {
             type: String,
-            enum: [
-                'Consultation',
-                'COVID Vaccine',
-                'Other Vaccine',
-                'Family Planning',
-                'NCD Checkup',
-                'Dental Checkup',
-                'Other',
-            ],
             required: true,
         },
         queueNumber: {

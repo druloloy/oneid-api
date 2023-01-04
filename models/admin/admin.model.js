@@ -90,6 +90,7 @@ AdminSchema.methods.compareSession = async function (sessionId) {
     if (admin.sessionId != sessionId) return false;
     return true;
 };
+
 const Admin = mongoose.model('Admin', AdminSchema);
 
 module.exports = Admin;

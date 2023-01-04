@@ -13,6 +13,7 @@ const JSZip = require('jszip');
 const skmeans = require('skmeans');
 const preprocess = require('../helpers/preprocess');
 const cookieConfig = require('../cookie.config');
+const Schedule = require('../models/admin/schedule.model');
 /** TODO
  * 1. Create database backup
  * 2. Create patient information backup
@@ -640,5 +641,165 @@ exports.generateClusteredQueueHistory = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+
+exports.createSchedule = async (req, res, next) => {
+    const days = [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday',
+    ];
+    try {
+        const { activities, startTime, endTime, day } = req.body;
+
+        const dayExists = await Schedule.findOne({ day: day.toLowerCase() });
+        if (dayExists) {
+            return next(new Exception('Day already exists.', 400));
+        }
+
+        const schedule = new Schedule({
+            id: days.indexOf(day),
+            day,
+            activities,
+            startTime,
+            endTime,
+        });
+
+        await schedule.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Schedule for ${day} created successfully!`,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.updateActivities = async (req, res, next) => {
+    try {
+        const { activities, day } = req.body;
+
+        const schedule = await Schedule.findOne({ day });
+        if (!schedule) {
+            return next(new Exception('Schedule does not exist', 400));
+        }
+
+        await schedule.updateActivities(activities).then((sched) => {
+            res.status(200).json({
+                success: true,
+                message: `Schedule for ${day} updated successfully!`,
+                content: sched,
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.updateTime = async (req, res, next) => {
+    try {
+        const { startTime, endTime, day } = req.body;
+
+        const schedule = await Schedule.findOne({ day });
+        if (!schedule) {
+            return next(new Exception('Schedule does not exist', 400));
+        }
+
+        await schedule.updateTime(startTime, endTime).then((sched) => {
+            res.status(200).json({
+                success: true,
+                message: `Schedule for ${day} updated successfully!`,
+                content: sched,
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.getSchedules = async (req, res, next) => {
+    try {
+        const schedules = await Schedule.find();
+        res.status(200).json({
+            success: true,
+            content: schedules,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.getActivities = async (req, res, next) => {
+    try {
+        const schedules = await Schedule.find();
+        const activities = schedules
+            .map((schedule) => schedule.activities)
+            // flatten array
+            .flat()
+            // remove dups
+            .reduce((acc, curr) => {
+                if (!acc.includes(curr)) {
+                    acc.push(curr);
+                }
+                return acc;
+            }, [])
+            .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        res.status(200).json({
+            success: true,
+            content: activities,
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.removeSchedule = async (req, res, next) => {
+    try {
+        const { day } = req.body;
+
+        const schedule = await Schedule.findOne({ day });
+        if (!schedule) {
+            return next(new Exception('Schedule does not exist', 400));
+        }
+        await schedule.remove().then((sched) => {
+            res.status(200).json({
+                success: true,
+                message: `Schedule for ${day} removed successfully!`,
+            });
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+exports.updatePassword = async (req, res, next) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        const user = await Admin.findById(req.user.id);
+        if (!user) {
+            return next(new Exception('User does not exist', 400));
+        }
+
+        const isMatch = await user.comparePassword(oldPassword);
+        if (!isMatch) {
+            return next(new Exception('Incorrect password', 400));
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully!',
+        });
+    } catch (error) {
+        return next(error);
     }
 };
