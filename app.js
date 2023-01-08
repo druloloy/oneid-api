@@ -1,5 +1,8 @@
 if (process.env.NODE_ENV != 'production') require('dotenv').config();
-
+if (process.env.NODE_ENV === 'production') {
+    // disable console.log
+    console.log = () => {};
+}
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const express = require('express');
