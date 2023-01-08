@@ -205,7 +205,9 @@ exports.addMedical = async (req, res, next) => {
             weight,
             bloodGroup,
             bloodPressure,
-            allergies,
+            allergies: allergies
+                ? allergies.filter(Boolean).map((a) => a.trim())
+                : [],
         });
         await patientMedical.save();
         patient.accountCompleted = true;
@@ -285,11 +287,16 @@ exports.updateMedical = async (req, res, next) => {
                 }
             }
         } else {
-            const { height, weight, bloodGroup } = req.body;
+            const { height, weight, bloodGroup, allergies } = req.body;
+            console.log(req.body);
             patientMedical.height = height;
             patientMedical.weight = weight;
             patientMedical.bloodGroup = bloodGroup;
-            patientMedical.save();
+            patientMedical.allergies =
+                allergies.length > 0
+                    ? allergies.filter(Boolean).map((a) => a.trim())
+                    : [];
+            await patientMedical.save();
         }
 
         res.status(200).json({

@@ -38,7 +38,7 @@ router.post('/logout', logoutAccount);
 
 router.post('/add_details', addAccountDetails);
 router.post('/add_medical', addMedical);
-router.post('/update_medical', bruteForce.prevent, updateMedical);
+router.post('/update_medical', updateMedical);
 
 router.put('/toggleSmsAlerts', bruteForce.prevent, toggleSmsAlerts);
 

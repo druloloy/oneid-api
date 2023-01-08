@@ -136,7 +136,7 @@ exports.consultPatient = async (req, res, next) => {
         const patientConsultation = new PatientConsultation({
             patientId: patient_id,
             condition,
-            treatments,
+            treatments: treatments.filter(Boolean),
             prescriptions,
             remarks,
             nextConsultation,
